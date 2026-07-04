@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import hashlib
 import re
+import time
 from typing import Any
 
 from aegis.core.knowledge import get_knowledge_base
@@ -52,7 +53,8 @@ class TieredDetector:
         self.max_tier = max_tier
         self.ml_enabled = ml_enabled
         self._scorer = AnomalyScorer() if ml_enabled else None
-        self._seen: set[str] = set()
+        self._seen: dict[str, float] = {}
+        self._dedup_ttl_seconds = 60.0
 
     def analyze(self, event: NormalizedEvent) -> NormalizedEvent:
         """Enrich event with detection tier results; may elevate severity/confidence."""
@@ -62,12 +64,12 @@ class TieredDetector:
         dedup_key = hashlib.sha256(
             f"{event.source_module}:{event.entity.id}:{event.observable.type}:{event.observable.value}".encode()
         ).hexdigest()
+        now = time.monotonic()
+        self._seen = {k: t for k, t in self._seen.items() if now - t < self._dedup_ttl_seconds}
         if dedup_key in self._seen:
             event.tags.append("deduplicated")
             return event
-        self._seen.add(dedup_key)
-        if len(self._seen) > 50_000:
-            self._seen.clear()
+        self._seen[dedup_key] = now
 
         if self.max_tier < 1:
             return event

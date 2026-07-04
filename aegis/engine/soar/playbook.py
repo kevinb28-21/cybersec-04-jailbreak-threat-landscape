@@ -12,7 +12,7 @@ import yaml
 from aegis.config import PLAYBOOKS_DIR, settings
 from aegis.core.audit import AuditLedger
 from aegis.core.schema import Alert, RemediationResult, RemediationStatus
-from aegis.integrations.firewall import block_ip as fw_block_ip, rollback_block as fw_rollback, verify_block as fw_verify
+from aegis.integrations.firewall import block_ip as fw_block_ip, isolate_host as fw_isolate_host, rollback_block as fw_rollback, verify_block as fw_verify
 
 logger = logging.getLogger(__name__)
 
@@ -191,8 +191,10 @@ class PlaybookEngine:
         return True, f"notification sent to {channel}", []
 
     def _action_isolate_host(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
-        host = alert.entity.id
-        return True, f"host {host} isolated (simulated)", [f"rollback_firewall:isolate-{host}"]
+        host = params.get("host") or alert.entity.id
+        success, msg, rule_id = fw_isolate_host(host)
+        rollback = [f"rollback_firewall:{rule_id}"] if success else []
+        return success, msg, rollback
 
     def _action_kill_process(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         pid = params.get("pid", "unknown")

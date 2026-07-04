@@ -82,6 +82,28 @@ class KnowledgeBase:
             )
             conn.commit()
 
+    def import_atlas_techniques(self, techniques: list[dict], source: str = "red-team-engine") -> int:
+        """Import techniques from ATLAS mapping JSON into the in-memory KB."""
+        count = 0
+        for t in techniques:
+            atlas_id = t.get("atlas_id", "")
+            rec = TechniqueRecord(
+                id=f"RTM-{atlas_id.replace('.', '-')}",
+                name=t.get("technique", t.get("name", atlas_id)),
+                category=t.get("tactic", "Red Team"),
+                severity="HIGH",
+                description=t.get("description", ""),
+                mitre_id=atlas_id,
+                mitre_framework="ATLAS",
+                defense_recommendations=t.get("defense_recommendations", ["Review red team finding", "Apply blue team playbook"]),
+                tags=["red_team", t.get("phase", "")],
+                effectiveness=4,
+                source=source,
+            )
+            self._techniques[rec.id] = rec
+            count += 1
+        return count
+
     def reload(self) -> None:
         self._techniques.clear()
         self._load_jailbreak_techniques()

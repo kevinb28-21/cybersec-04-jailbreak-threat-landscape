@@ -39,9 +39,9 @@ class RedTeamEngineModule(SecurityModule):
             return 0
         with open(mapping_path, encoding="utf-8") as fh:
             data = json.load(fh)
-        count = 0
-        for tech in data.get("techniques", []):
-            count += 1
+        techniques = data.get("techniques", [])
+        kb = get_knowledge_base()
+        count = kb.import_atlas_techniques(techniques, source=self.name)
         self._imported = count
         return count
 

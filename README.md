@@ -68,6 +68,7 @@ Set `API_KEY` in `.env`. In production (`ENVIRONMENT=production`), startup fails
 | POST | `/ingest/image` | VLM image analysis (Project 07) |
 | POST | `/ingest/runtime` | Falco/runtime alert (Project 08) |
 | POST | `/ingest/ml-features` | Adversarial ML features (Project 09) |
+| POST | `/ingest/red-team-finding` | Red team exercise finding (Project 10) |
 | POST | `/ingest/dns` | DNS query analysis |
 | POST | `/ingest/hash` | File hash IOC check |
 | GET | `/alerts` | Recent alerts |
@@ -132,7 +133,20 @@ API_PORT=8080
 
 ```bash
 pytest tests/ -v
+./scripts/uat.sh   # full API + CLI acceptance test (requires running server)
 ```
+
+## Documentation
+
+Engineer-grade docs in `docs/`:
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Network integration](docs/NETWORK_INTEGRATION.md)
+- [API reference](docs/API_REFERENCE.md)
+- [Deployment runbook](docs/DEPLOYMENT_RUNBOOK.md)
+- [Operator runbook](docs/OPERATOR_RUNBOOK.md)
+- [Demo & presentation plan](docs/DEMO_PRESENTATION_PLAN.md)
+- [UAT report](docs/UAT_REPORT.md)
 
 ## License
 

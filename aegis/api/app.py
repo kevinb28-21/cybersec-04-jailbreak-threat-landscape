@@ -110,7 +110,7 @@ app = FastAPI(
 
 
 class IngestPromptRequest(BaseModel):
-    prompt: str = Field(..., max_length=32_000)
+    prompt: str = Field(..., min_length=1, max_length=32_000)
     entity_id: str = "llm-gateway"
     session_id: str = "default"
     auto_respond: bool = False
@@ -166,7 +166,16 @@ class IngestRAGChunkRequest(BaseModel):
 
 
 class IngestImageRequest(BaseModel):
-    image_path: str
+    image_path: str = Field(..., min_length=1, max_length=4096)
+    auto_respond: bool = False
+
+
+class IngestRedTeamFindingRequest(BaseModel):
+    finding_id: str = Field(..., min_length=1, max_length=128)
+    title: str = Field(..., min_length=1, max_length=500)
+    severity: str = "HIGH"
+    description: str = Field(..., min_length=1, max_length=8000)
+    atlas_id: str = ""
     auto_respond: bool = False
 
 
@@ -284,7 +293,20 @@ async def ingest_image(req: IngestImageRequest) -> dict[str, Any]:
     from aegis.modules.vlm_guard.module import VLMGuardModule
     if not isinstance(mod, VLMGuardModule):
         raise HTTPException(status_code=500, detail="vlm-guard unavailable")
-    event = mod.analyze_image_file(req.image_path) if req.image_path else mod.ingest_image_metadata(req.image_path)
+    event = mod.analyze_image_file(req.image_path)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/red-team-finding", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_red_team_finding(req: IngestRedTeamFindingRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("red-team-engine")
+    from aegis.modules.red_team_engine.module import RedTeamEngineModule
+    if not isinstance(mod, RedTeamEngineModule):
+        raise HTTPException(status_code=500, detail="red-team-engine unavailable")
+    event = mod.ingest_finding(
+        req.finding_id, req.title, req.severity, req.description, req.atlas_id,
+    )
     return await platform.ingest(event, auto_respond=req.auto_respond)
 
 
@@ -355,7 +377,7 @@ async def list_playbooks() -> list[str]:
 @app.post("/feedback", dependencies=[Depends(verify_api_key)])
 async def submit_feedback(req: FeedbackRequest) -> dict:
     platform = get_platform()
-    if not any(a.alert_id == req.alert_id for a in platform.correlator.list_alerts(500)):
+    if not platform.correlator.alert_exists(req.alert_id):
         raise HTTPException(status_code=404, detail="Alert not found")
     from aegis.core.knowledge import get_knowledge_base
     get_knowledge_base().add_feedback(req.alert_id, req.label, req.notes)
@@ -372,7 +394,8 @@ async def update_alert_status(alert_id: str, status: AlertStatus) -> dict:
 
 
 def _redact_alert(alert: dict) -> dict:
-    desc = alert.get("description", "")
+    redacted = dict(alert)
+    desc = redacted.get("description", "")
     if len(desc) > 120:
-        alert["description"] = desc[:120] + "… [redacted]"
-    return alert
+        redacted["description"] = desc[:120] + "… [redacted]"
+    return redacted

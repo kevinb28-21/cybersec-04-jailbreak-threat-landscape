@@ -130,10 +130,19 @@ class CorrelationEngine:
             return False
         if a.mitre and b.mitre and a.mitre.id == b.mitre.id:
             return True
-        stages = {a.attack_chain_stage, b.attack_chain_stage}
-        if len(stages) > 1 and stages <= set(self.STAGE_ORDER):
+        overlap = set(a.kb_refs) & set(b.kb_refs)
+        if overlap:
             return True
-        return a.source_module == b.source_module
+        stages = {a.attack_chain_stage, b.attack_chain_stage}
+        if len(stages) > 1:
+            ordered = self.STAGE_ORDER
+            try:
+                idx = sorted(stages, key=lambda s: ordered.index(s) if s in ordered else 99)
+                if len(idx) == 2 and abs(ordered.index(idx[0]) - ordered.index(idx[1])) <= 1:
+                    return True
+            except ValueError:
+                pass
+        return False
 
     def _build_incident(self, correlation_id: str, alerts: list[Alert]) -> Incident:
         severity_order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
@@ -195,9 +204,23 @@ class CorrelationEngine:
             ).fetchall()
         return [Alert.model_validate_json(r["data"]) for r in rows]
 
-    def update_alert_status(self, alert_id: str, status: AlertStatus) -> bool:
-        import json
+    def alert_exists(self, alert_id: str) -> bool:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM alerts WHERE alert_id = ?", (alert_id,)
+            ).fetchone()
+        return row is not None
 
+    def get_alert(self, alert_id: str) -> Alert | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT data FROM alerts WHERE alert_id = ?", (alert_id,)
+            ).fetchone()
+        if not row:
+            return None
+        return Alert.model_validate_json(row["data"])
+
+    def update_alert_status(self, alert_id: str, status: AlertStatus) -> bool:
         with self._connect() as conn:
             row = conn.execute(
                 "SELECT data FROM alerts WHERE alert_id = ?", (alert_id,)

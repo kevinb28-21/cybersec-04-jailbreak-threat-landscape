@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 from typing import Any
@@ -63,8 +64,14 @@ class AegisPlatform:
             raise KeyError(f"Unknown module: {name}")
         return self.modules[name]
 
+    def _dedup_key(self, alert: Alert) -> str:
+        kb = ",".join(sorted(alert.kb_refs))
+        mitre = alert.mitre.id if alert.mitre else ""
+        desc_hash = hashlib.sha256(alert.description.encode()).hexdigest()[:12]
+        return f"{alert.source_module}:{alert.entity.id}:{mitre}:{kb}:{desc_hash}"
+
     def _should_dedup_alert(self, alert: Alert) -> bool:
-        key = f"{alert.source_module}:{alert.entity.id}:{alert.title}"
+        key = self._dedup_key(alert)
         now = time.monotonic()
         last = self._alert_dedup.get(key, 0)
         if now - last < settings.alert_dedup_window_seconds:
@@ -99,9 +106,11 @@ class AegisPlatform:
         incidents: list[Incident] = []
         remediations: list[RemediationResult] = []
         alert_ids: list[str] = []
+        suppressed = 0
 
         for alert in module_alerts:
             if self._should_dedup_alert(alert):
+                suppressed += 1
                 continue
             await self.bus.publish_alert(alert)
             alert_ids.append(alert.alert_id)
@@ -113,10 +122,11 @@ class AegisPlatform:
                 payload={"title": alert.title, "severity": alert.severity.value},
             )
             if auto_respond or settings.auto_response_enabled:
+                force = auto_respond or settings.auto_response_enabled
                 for pb_id in alert.recommended_playbooks[:1]:
                     if not self._should_run_playbook(alert.entity.id, pb_id):
                         continue
-                    result = self.soar.execute(pb_id, alert)
+                    result = self.soar.execute(pb_id, alert, force=force)
                     remediations.append(result)
                     self.audit.append(
                         actor="soar-engine", action=f"remediation_{result.status.value}",
@@ -132,6 +142,8 @@ class AegisPlatform:
             "incidents": [i.incident_id for i in incidents],
             "remediations": [r.status.value for r in remediations],
             "auto_respond": auto_respond or settings.auto_response_enabled,
+            "suppressed_alerts": suppressed,
+            "threat_detected": enriched.confidence >= 0.5,
         }
 
     async def ingest_log_line(self, host_id: str, log_line: str, auto_respond: bool = False) -> dict[str, Any]:

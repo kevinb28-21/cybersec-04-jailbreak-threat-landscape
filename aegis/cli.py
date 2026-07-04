@@ -53,10 +53,18 @@ async def cmd_test_scan(args: argparse.Namespace) -> int:
     from aegis.modules.net_sentinel.module import NetSentinelModule
     mod = platform.get_module("net-sentinel")
     assert isinstance(mod, NetSentinelModule)
-    for _ in range(args.count):
-        event = mod.ingest_flow(args.ip, args.port)
-        result = await platform.ingest(event)
-    print(json.dumps(result, indent=2))
+    total_alerts = 0
+    last = None
+    for i in range(args.count):
+        event = mod.ingest_flow(args.ip, args.port + (i % 10))
+        last = await platform.ingest(event)
+        total_alerts += len(last.get("alerts", []))
+    summary = {
+        **(last or {}),
+        "scan_count": args.count,
+        "total_alerts": total_alerts,
+    }
+    print(json.dumps(summary, indent=2))
     return 0
 
 
