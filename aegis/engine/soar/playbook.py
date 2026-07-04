@@ -12,6 +12,7 @@ import yaml
 from aegis.config import PLAYBOOKS_DIR, settings
 from aegis.core.audit import AuditLedger
 from aegis.core.schema import Alert, RemediationResult, RemediationStatus
+from aegis.integrations.firewall import block_ip as fw_block_ip, rollback_block as fw_rollback, verify_block as fw_verify
 
 logger = logging.getLogger(__name__)
 
@@ -174,10 +175,9 @@ class PlaybookEngine:
 
     def _action_block_ip(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         ip = params.get("ip") or alert.entity.id
-        rule_id = f"block-{ip.replace('.', '-')}"
-        prefix = "[SIMULATED] " if settings.soar_simulation_mode else ""
-        rollback = [f"rollback_firewall:{rule_id}"]
-        return True, f"{prefix}blocked IP {ip}", rollback
+        success, msg, rule_id = fw_block_ip(ip)
+        rollback = [f"rollback_firewall:{rule_id}"] if success else []
+        return success, msg, rollback
 
     def _action_block_llm(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         return True, "LLM request blocked at gateway", []
@@ -199,8 +199,11 @@ class PlaybookEngine:
         return True, f"process {pid} terminated (simulated)", []
 
     def _action_verify_block(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
-        return True, "block verified", []
+        ip = params.get("ip") or alert.entity.id
+        ok = fw_verify(ip)
+        return ok, "block verified" if ok else "block not verified", []
 
     def _action_rollback_firewall(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         rule_id = params.get("rule_id", "")
-        return True, f"rolled back rule {rule_id}", []
+        ok, msg = fw_rollback(rule_id)
+        return ok, msg, []

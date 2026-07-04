@@ -86,6 +86,12 @@ class KnowledgeBase:
         self._techniques.clear()
         self._load_jailbreak_techniques()
         self._load_network_techniques()
+        kb = self.knowledge_dir
+        self._load_json_techniques(kb / "agent_techniques.json", "agent-guard", "ATLAS")
+        self._load_json_techniques(kb / "rag_techniques.json", "rag-guard", "ATLAS")
+        self._load_json_techniques(kb / "vlm_techniques.json", "vlm-guard", "ATLAS")
+        self._load_json_techniques(kb / "runtime_techniques.json", "runtime-guard", "ATTACK")
+        self._load_json_techniques(kb / "adversarial_techniques.json", "adversarial-ml", "ATLAS")
         self._load_seed_iocs()
 
     def _load_json_techniques(self, path: Path, source: str, framework: str) -> None:
@@ -175,6 +181,12 @@ class KnowledgeBase:
             "aisec-guard": ["block_llm_request", "alert_soc_llm"],
             "net-sentinel": ["block_ip", "rate_limit_scanner"],
             "host-shield": ["isolate_host", "kill_process"],
+            "agent-guard": ["block_llm_request", "alert_soc_llm"],
+            "rag-guard": ["block_llm_request", "alert_soc_llm"],
+            "vlm-guard": ["block_llm_request", "alert_soc_llm"],
+            "runtime-guard": ["isolate_host", "alert_soc_generic"],
+            "adversarial-ml": ["rate_limit_scanner", "alert_soc_generic"],
+            "red-team-engine": ["alert_soc_generic"],
         }
         return mapping.get(tech.source, ["alert_soc_generic"])
 

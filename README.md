@@ -5,7 +5,7 @@
 ## Features
 
 - **Unified event pipeline** — all modules emit `NormalizedEvent`; one correlation and SOAR engine
-- **Three security modules** — `aisec-guard` (LLM/jailbreak), `net-sentinel` (network), `host-shield` (endpoint)
+- **Nine security modules** — Projects 04–10 plus network and endpoint protection
 - **Tiered detection** — IOC/signatures → heuristics → Isolation Forest ML (offline train, online infer)
 - **Knowledge base** — MITRE ATT&CK + ATLAS techniques, IOCs, defense recommendations
 - **SOAR playbooks** — YAML playbooks with verify, rollback, and tiered autonomy
@@ -63,8 +63,14 @@ Set `API_KEY` in `.env`. In production (`ENVIRONMENT=production`), startup fails
 | POST | `/ingest/prompt` | LLM prompt analysis |
 | POST | `/ingest/flow` | Network flow analysis |
 | POST | `/ingest/log` | Host log line analysis |
+| POST | `/ingest/agent-tool` | AI agent tool output (Project 05) |
+| POST | `/ingest/rag-chunk` | RAG retrieved chunk (Project 06) |
+| POST | `/ingest/image` | VLM image analysis (Project 07) |
+| POST | `/ingest/runtime` | Falco/runtime alert (Project 08) |
+| POST | `/ingest/ml-features` | Adversarial ML features (Project 09) |
+| POST | `/ingest/dns` | DNS query analysis |
+| POST | `/ingest/hash` | File hash IOC check |
 | GET | `/alerts` | Recent alerts |
-| GET | `/incidents` | Correlated incidents |
 | GET | `/knowledge/techniques` | Search threat techniques |
 | GET | `/playbooks` | List SOAR playbooks |
 
@@ -96,7 +102,7 @@ knowledge-base/           # Threat intel, playbooks
 ├── seed_iocs.json
 └── playbooks/
 
-deploy/                   # Docker deployment
+cyber-projects/             # Cloned numbered research projects 04-10
 tests/                    # Integration tests
 ```
 

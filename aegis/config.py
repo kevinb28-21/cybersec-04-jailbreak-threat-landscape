@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Aegis Sentinel"
-    version: str = "1.0.0"
+    version: str = "1.0.0-beta"
     deployment_profile: Literal["personal", "smb", "enterprise"] = "personal"
     environment: Literal["development", "production"] = "development"
     log_level: str = "INFO"

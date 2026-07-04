@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "source_project": "08-llm-container-escape-testing",
+  "techniques": [
+    {
+      "id": "RT-001",
+      "name": "Docker Socket Access from Container",
+      "category": "Container Escape",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "mitre_attack_id": "T1611",
+      "defense_recommendations": ["Never mount docker.sock", "Deploy Falco runtime rules", "Use gVisor or Kata containers"],
+      "tags": ["container_escape", "docker_socket", "runtime"]
+    },
+    {
+      "id": "RT-002",
+      "name": "Privileged Container Mode Abuse",
+      "category": "Container Escape",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "mitre_attack_id": "T1611",
+      "defense_recommendations": ["Drop all capabilities", "Run as non-root", "Use read-only root filesystem"],
+      "tags": ["privileged", "container_escape", "runtime"]
+    },
+    {
+      "id": "RT-003",
+      "name": "Sensitive Host File Read from Container",
+      "category": "Container Escape",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_attack_id": "T1005",
+      "defense_recommendations": ["Restrict volume mounts", "Monitor /etc/shadow access", "AppArmor/SELinux profiles"],
+      "tags": ["host_mount", "sensitive_file", "runtime"]
+    }
+  ]
+}

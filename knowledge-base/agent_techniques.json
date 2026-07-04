@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "source_project": "05-ai-agent-security-testing-lab",
+  "techniques": [
+    {
+      "id": "AGT-001",
+      "name": "Tool Output Poisoning",
+      "category": "Agent Security",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "mitre_atlas_id": "AML.T0054.002",
+      "defense_recommendations": ["Validate tool outputs before agent consumption", "Sandbox tool execution", "Sign tool responses"],
+      "tags": ["tool_poisoning", "agent", "indirect_injection"]
+    },
+    {
+      "id": "AGT-002",
+      "name": "Agent Memory Injection",
+      "category": "Agent Security",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0054.002",
+      "defense_recommendations": ["Isolate session memory", "Scan memory writes for injection patterns", "Expire memory on privilege change"],
+      "tags": ["memory_injection", "agent", "cross_session"]
+    },
+    {
+      "id": "AGT-003",
+      "name": "Indirect Prompt Injection via Tool Data",
+      "category": "Agent Security",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "mitre_atlas_id": "AML.T0054.002",
+      "defense_recommendations": ["Treat all external data as untrusted", "Separate data plane from instruction plane"],
+      "tags": ["indirect_injection", "agent", "tool_chain"]
+    }
+  ]
+}

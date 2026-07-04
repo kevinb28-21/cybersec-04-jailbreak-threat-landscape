@@ -4,6 +4,11 @@ results/
 *.db
 *.joblib
 
+# Cloned cyber project repos (run scripts/clone-cyber-projects.sh)
+cyber-projects/0*/
+cyber-projects/1*/
+!cyber-projects/README.md
+
 # Environment
 .env
 .env.*

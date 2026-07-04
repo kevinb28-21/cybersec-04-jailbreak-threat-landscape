@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 _rate_buckets: dict[str, list[float]] = defaultdict(list)
 _watchdog_task = None
+_collector_task = None
 
 
 def _rate_limit_check(client_id: str) -> None:
@@ -61,7 +62,7 @@ def get_platform() -> AegisPlatform:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     import asyncio
 
-    global _watchdog_task
+    global _watchdog_task, _collector_task
     settings.require_api_key_in_production()
     platform = get_platform()
 
@@ -78,10 +79,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _watchdog_task = asyncio.create_task(watchdog.run())
         logger.info("Watchdog started")
 
+    from aegis.agents.collector import SampleLogGenerator, SyslogCollector
+    SampleLogGenerator.ensure_sample_log()
+    collector = SyslogCollector()
+
+    async def on_log(host_id: str, line: str) -> None:
+        await platform.ingest_log_line(host_id, line)
+
+    _collector_task = asyncio.create_task(collector.run(on_log))
+    logger.info("Syslog collector started")
+
     yield
 
+    if _collector_task:
+        collector.stop()
+        _collector_task.cancel()
     if _watchdog_task:
-        from aegis.agents.watchdog import SelfHealingWatchdog
         _watchdog_task.cancel()
 
 
@@ -134,6 +147,42 @@ class FeedbackRequest(BaseModel):
     alert_id: str
     label: str = Field(pattern="^(true_positive|false_positive)$")
     notes: str = Field(default="", max_length=2000)
+
+
+class IngestAgentToolRequest(BaseModel):
+    agent_id: str
+    tool_name: str
+    output: str = Field(..., max_length=16_000)
+    session_id: str = ""
+    auto_respond: bool = False
+
+
+class IngestRAGChunkRequest(BaseModel):
+    collection: str
+    source: str
+    chunk: str = Field(..., max_length=32_000)
+    trust_level: int = Field(default=1, ge=0, le=3)
+    auto_respond: bool = False
+
+
+class IngestImageRequest(BaseModel):
+    image_path: str
+    auto_respond: bool = False
+
+
+class IngestRuntimeRequest(BaseModel):
+    rule: str
+    output: str = Field(..., max_length=16_000)
+    container: str = ""
+    priority: str = "HIGH"
+    auto_respond: bool = False
+
+
+class IngestFeaturesRequest(BaseModel):
+    source_ip: str
+    features: list[float] = Field(..., max_length=128)
+    ml_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    auto_respond: bool = False
 
 
 @app.get("/health")
@@ -203,6 +252,61 @@ async def ingest_hash(req: IngestHashRequest) -> dict[str, Any]:
     if not isinstance(mod, HostShieldModule):
         raise HTTPException(status_code=500, detail="host-shield module unavailable")
     event = mod.ingest_file_hash(req.host_id, req.file_hash, req.file_path)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/agent-tool", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_agent_tool(req: IngestAgentToolRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("agent-guard")
+    from aegis.modules.agent_guard.module import AgentGuardModule
+    if not isinstance(mod, AgentGuardModule):
+        raise HTTPException(status_code=500, detail="agent-guard unavailable")
+    event = mod.ingest_tool_output(req.agent_id, req.tool_name, req.output, req.session_id)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/rag-chunk", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_rag_chunk(req: IngestRAGChunkRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("rag-guard")
+    from aegis.modules.rag_guard.module import RAGGuardModule
+    if not isinstance(mod, RAGGuardModule):
+        raise HTTPException(status_code=500, detail="rag-guard unavailable")
+    event = mod.ingest_chunk(req.collection, req.source, req.chunk, req.trust_level)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/image", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_image(req: IngestImageRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("vlm-guard")
+    from aegis.modules.vlm_guard.module import VLMGuardModule
+    if not isinstance(mod, VLMGuardModule):
+        raise HTTPException(status_code=500, detail="vlm-guard unavailable")
+    event = mod.analyze_image_file(req.image_path) if req.image_path else mod.ingest_image_metadata(req.image_path)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/runtime", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_runtime(req: IngestRuntimeRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("runtime-guard")
+    from aegis.modules.runtime_guard.module import RuntimeGuardModule
+    if not isinstance(mod, RuntimeGuardModule):
+        raise HTTPException(status_code=500, detail="runtime-guard unavailable")
+    event = mod.ingest_falco_alert(req.rule, req.output, req.container, req.priority)
+    return await platform.ingest(event, auto_respond=req.auto_respond)
+
+
+@app.post("/ingest/ml-features", dependencies=[Depends(rate_limit_dependency)])
+async def ingest_ml_features(req: IngestFeaturesRequest) -> dict[str, Any]:
+    platform = get_platform()
+    mod = platform.get_module("adversarial-ml")
+    from aegis.modules.adversarial_ml.module import AdversarialMLModule
+    if not isinstance(mod, AdversarialMLModule):
+        raise HTTPException(status_code=500, detail="adversarial-ml unavailable")
+    event = mod.ingest_features(req.source_ip, req.features, req.ml_score)
     return await platform.ingest(event, auto_respond=req.auto_respond)
 
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aegis-sentinel"
-version = "1.0.0"
+version = "1.0.0-beta"
 description = "Unified cybersecurity platform: network, endpoint, and AI security with real-time detection and autonomous response"
 readme = "README.md"
 requires-python = ">=3.11"

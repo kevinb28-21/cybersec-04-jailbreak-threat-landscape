@@ -1,0 +1,79 @@
+{
+  "framework": "MITRE ATLAS v4.0",
+  "url": "https://atlas.mitre.org/",
+  "exercise": "AI Red Team Full Exercise — LLM-Powered Application",
+  "techniques": [
+    {
+      "atlas_id": "AML.T0040",
+      "tactic": "Reconnaissance",
+      "technique": "ML Model Inference API Access",
+      "phase": "Recon",
+      "module": "red_team/recon.py",
+      "description": "Probe the API to discover model type, system prompt indicators, rate limits, and input filters.",
+      "findings": ["Model fingerprinting via error message analysis", "Rate limit enumeration", "Output format probing"]
+    },
+    {
+      "atlas_id": "AML.T0054",
+      "tactic": "Execution",
+      "technique": "LLM Prompt Injection",
+      "phase": "Initial Access / Execution",
+      "module": "red_team/prompt_injection.py",
+      "description": "Inject instructions into user-controlled fields that override system prompt intent.",
+      "subtechniques": [
+        {"id": "AML.T0054.000", "name": "Direct Prompt Injection"},
+        {"id": "AML.T0054.001", "name": "Indirect Prompt Injection via External Data"}
+      ],
+      "owasp_ref": "LLM01: Prompt Injection"
+    },
+    {
+      "atlas_id": "AML.T0051",
+      "tactic": "ML Attack Staging",
+      "technique": "LLM Jailbreak",
+      "phase": "Execution",
+      "module": "red_team/prompt_injection.py",
+      "description": "Use role-play, persona manipulation, or instruction override to bypass safety guidelines.",
+      "owasp_ref": "LLM01: Prompt Injection"
+    },
+    {
+      "atlas_id": "AML.T0024",
+      "tactic": "Exfiltration",
+      "technique": "Invert ML Model",
+      "phase": "Exfiltration",
+      "module": "red_team/data_exfiltration.py",
+      "description": "Reconstruct training data or extract system prompt through carefully crafted queries.",
+      "owasp_ref": "LLM06: Sensitive Information Disclosure"
+    },
+    {
+      "atlas_id": "AML.T0043",
+      "tactic": "ML Attack Staging",
+      "technique": "Craft Adversarial Data",
+      "phase": "Impact / Abuse",
+      "module": "red_team/model_abuse.py",
+      "description": "Craft inputs that cause the model to produce inaccurate, biased, or harmful outputs.",
+      "owasp_ref": "LLM09: Misinformation"
+    },
+    {
+      "atlas_id": "AML.T0048",
+      "tactic": "Impact",
+      "technique": "Societal Harm",
+      "phase": "Impact",
+      "module": "red_team/model_abuse.py",
+      "description": "Generate outputs that amplify harmful biases or produce reputationally damaging content.",
+      "owasp_ref": "LLM06, LLM09"
+    },
+    {
+      "atlas_id": "AML.T0029",
+      "tactic": "Impact",
+      "technique": "Denial of ML Service",
+      "phase": "Impact / Abuse",
+      "module": "red_team/model_abuse.py",
+      "description": "Submit sponge inputs (maximally long, compute-intensive) to exhaust inference capacity.",
+      "owasp_ref": "LLM04: Model Denial of Service"
+    }
+  ],
+  "tools_referenced": [
+    {"name": "Garak", "url": "https://github.com/NVIDIA/garak", "use": "Automated probe scanning"},
+    {"name": "PyRIT", "url": "https://github.com/Azure/PyRIT", "use": "Multi-turn red team orchestration"},
+    {"name": "Burp Suite", "url": "https://portswigger.net/burp", "use": "HTTP traffic interception and replay"}
+  ]
+}

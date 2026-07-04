@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "source_project": "09-adversarial-attack-on-ai-ids",
+  "techniques": [
+    {
+      "id": "ADV-001",
+      "name": "FGSM Evasion of ML Detector",
+      "category": "Adversarial ML",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0015",
+      "defense_recommendations": ["Adversarial training", "Feature squeezing", "Ensemble model voting"],
+      "tags": ["adversarial", "fgsm", "evasion", "ml"]
+    },
+    {
+      "id": "ADV-002",
+      "name": "PGD Evasion Attack",
+      "category": "Adversarial ML",
+      "severity": "HIGH",
+      "effectiveness_rating": 5,
+      "mitre_atlas_id": "AML.T0015",
+      "defense_recommendations": ["Input randomization", "Adversarial example detection", "Model ensemble"],
+      "tags": ["adversarial", "pgd", "evasion", "ml"]
+    },
+    {
+      "id": "ADV-003",
+      "name": "Black-Box ZOO Evasion",
+      "category": "Adversarial ML",
+      "severity": "MEDIUM",
+      "effectiveness_rating": 3,
+      "mitre_atlas_id": "AML.T0015",
+      "defense_recommendations": ["Rate limit ML inference", "Monitor query patterns", "Ensemble defenses"],
+      "tags": ["adversarial", "zoo", "black_box", "evasion"]
+    }
+  ]
+}
