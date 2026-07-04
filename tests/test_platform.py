@@ -29,6 +29,8 @@ def isolated_env(tmp_path, monkeypatch):
     config.settings.sqlite_path = db
     config.settings.data_dir = tmp_path
     config.settings.ml_model_path = tmp_path / "model.joblib"
+    config.settings.auto_response_enabled = False
+    config.settings.api_key = "test-key"
     yield tmp_path
 
 
@@ -64,12 +66,12 @@ async def test_brute_force_detection():
     platform = AegisPlatform()
     mod = platform.get_module("host-shield")
     assert isinstance(mod, HostShieldModule)
-    last = None
-    for _ in range(6):
-        event = mod.ingest_log_line("workstation-01", "Failed password for root")
-        last = await platform.ingest(event)
-    assert last is not None
-    assert last["alerts"]
+    for _ in range(5):
+        mod.ingest_log_line("workstation-01", "Failed password for root")
+    event = mod.ingest_log_line("workstation-01", "Failed password for root")
+    assert event.confidence >= 0.5
+    result = await platform.ingest(event)
+    assert result["alerts"]
 
 
 @pytest.mark.asyncio

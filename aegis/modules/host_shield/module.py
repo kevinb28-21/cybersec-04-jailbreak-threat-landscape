@@ -33,8 +33,8 @@ class HostShieldModule(SecurityModule):
         re.I,
     )
 
-    def __init__(self) -> None:
-        self.playbooks = PlaybookEngine()
+    def __init__(self, soar: PlaybookEngine | None = None) -> None:
+        self.playbooks = soar or PlaybookEngine()
         self._auth_failures: dict[str, list[datetime]] = defaultdict(list)
         self._failure_threshold = 5
         self._window = timedelta(minutes=5)
@@ -48,26 +48,33 @@ class HostShieldModule(SecurityModule):
         tags: list[str] = []
         kb_refs: list[str] = []
         mitre = None
+        order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
+
+        def merge(new_sev: Severity, new_conf: float, new_tags: list[str], new_refs: list[str], new_mitre: MitreRef | None) -> None:
+            nonlocal severity, confidence, mitre
+            if order.index(new_sev) < order.index(severity):
+                severity = new_sev
+            confidence = max(confidence, new_conf)
+            for t in new_tags:
+                if t not in tags:
+                    tags.append(t)
+            for r in new_refs:
+                if r not in kb_refs:
+                    kb_refs.append(r)
+            if new_mitre and (mitre is None or new_sev == Severity.CRITICAL):
+                mitre = new_mitre
 
         if self.SUSPICIOUS_PROCESSES.search(log_line):
-            severity = Severity.CRITICAL
-            confidence = 0.9
-            tags = ["execution", "malware"]
-            kb_refs = ["HOST-001"]
-            mitre = MitreRef(framework=MitreFramework.ATTACK, id="T1059", tactic="Execution", technique="Command and Scripting Interpreter")
+            merge(Severity.CRITICAL, 0.9, ["execution", "malware"], ["HOST-001"],
+                  MitreRef(framework=MitreFramework.ATTACK, id="T1059", tactic="Execution", technique="Command and Scripting Interpreter"))
 
         if re.search(r"failed\s+password|authentication\s+failure", log_line, re.I):
             now = datetime.now(timezone.utc)
             self._auth_failures[host_id].append(now)
-            self._auth_failures[host_id] = [
-                t for t in self._auth_failures[host_id] if now - t <= self._window
-            ]
+            self._auth_failures[host_id] = [t for t in self._auth_failures[host_id] if now - t <= self._window]
             if len(self._auth_failures[host_id]) >= self._failure_threshold:
-                severity = Severity.HIGH
-                confidence = 0.85
-                tags = ["brute_force", "credential_access"]
-                kb_refs = ["HOST-002"]
-                mitre = MitreRef(framework=MitreFramework.ATTACK, id="T1110", tactic="Credential Access", technique="Brute Force")
+                merge(Severity.HIGH, 0.85, ["brute_force", "credential_access"], ["HOST-002"],
+                      MitreRef(framework=MitreFramework.ATTACK, id="T1110", tactic="Credential Access", technique="Brute Force"))
 
         return NormalizedEvent(
             source_module=self.name,

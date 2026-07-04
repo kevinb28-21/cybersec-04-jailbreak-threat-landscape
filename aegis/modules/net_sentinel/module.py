@@ -28,8 +28,8 @@ class NetSentinelModule(SecurityModule):
     name = "net-sentinel"
     version = "1.0.0"
 
-    def __init__(self) -> None:
-        self.playbooks = PlaybookEngine()
+    def __init__(self, soar: PlaybookEngine | None = None) -> None:
+        self.playbooks = soar or PlaybookEngine()
         self._connection_counts: dict[str, list[datetime]] = defaultdict(list)
         self._scan_threshold = 20
         self._window = timedelta(seconds=60)

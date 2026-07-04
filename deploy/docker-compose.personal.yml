@@ -8,14 +8,28 @@ services:
     volumes:
       - aegis-data:/app/data
     environment:
+      - ENVIRONMENT=production
       - DEPLOYMENT_PROFILE=personal
       - EVENT_BUS_BACKEND=memory
       - LOG_LEVEL=INFO
       - API_HOST=0.0.0.0
       - API_PORT=8080
+      - API_KEY=${API_KEY:-change-me-before-deploy}
+      - AUTO_RESPONSE_ENABLED=false
+      - SOAR_SIMULATION_MODE=true
       - ML_ENABLED=true
       - WATCHDOG_ENABLED=true
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s

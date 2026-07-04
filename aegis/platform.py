@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
+from aegis.config import settings
 from aegis.core.audit import AuditLedger
 from aegis.core.correlation import CorrelationEngine
 from aegis.core.event_bus import get_event_bus
@@ -24,23 +26,46 @@ class AegisPlatform:
 
     def __init__(self) -> None:
         self.bus = get_event_bus()
-        self.detector = TieredDetector()
+        self.detector = TieredDetector(
+            max_tier=settings.detection_tier_max,
+            ml_enabled=settings.ml_enabled,
+        )
         self.correlator = CorrelationEngine()
         self.soar = PlaybookEngine()
         self.audit = AuditLedger()
+        self._soar_last_run: dict[str, float] = {}
+        self._alert_dedup: dict[str, float] = {}
         self.modules: dict[str, SecurityModule] = {
-            "aisec-guard": AISecGuardModule(),
-            "net-sentinel": NetSentinelModule(),
-            "host-shield": HostShieldModule(),
+            "aisec-guard": AISecGuardModule(self.soar),
+            "net-sentinel": NetSentinelModule(self.soar),
+            "host-shield": HostShieldModule(self.soar),
         }
-        self._remediations: list[RemediationResult] = []
+        self._remediations: list = []
 
     def get_module(self, name: str) -> SecurityModule:
         if name not in self.modules:
             raise KeyError(f"Unknown module: {name}")
         return self.modules[name]
 
-    async def ingest(self, event: NormalizedEvent) -> dict[str, Any]:
+    def _should_dedup_alert(self, alert: Alert) -> bool:
+        key = f"{alert.source_module}:{alert.entity.id}:{alert.title}"
+        now = time.monotonic()
+        last = self._alert_dedup.get(key, 0)
+        if now - last < settings.alert_dedup_window_seconds:
+            return True
+        self._alert_dedup[key] = now
+        return False
+
+    def _should_run_playbook(self, entity_id: str, playbook_id: str) -> bool:
+        key = f"{entity_id}:{playbook_id}"
+        now = time.monotonic()
+        last = self._soar_last_run.get(key, 0)
+        if now - last < settings.soar_cooldown_seconds:
+            return False
+        self._soar_last_run[key] = now
+        return True
+
+    async def ingest(self, event: NormalizedEvent, auto_respond: bool = False) -> dict[str, Any]:
         """Full pipeline: detect → correlate → respond → audit."""
         enriched = self.detector.analyze(event)
         await self.bus.publish_event(enriched)
@@ -58,9 +83,14 @@ class AegisPlatform:
 
         incidents: list[Incident] = []
         remediations: list[RemediationResult] = []
+        alert_ids: list[str] = []
 
         for alert in module_alerts:
+            if self._should_dedup_alert(alert):
+                continue
+
             await self.bus.publish_alert(alert)
+            alert_ids.append(alert.alert_id)
             incident = self.correlator.correlate(alert)
             incidents.append(incident)
 
@@ -72,11 +102,14 @@ class AegisPlatform:
                 payload={"title": alert.title, "severity": alert.severity.value},
             )
 
-            for pb_id in alert.recommended_playbooks:
-                result = self.soar.execute(pb_id, alert)
-                remediations.append(result)
-                self._remediations.append(result)
-                if result.status.value in ("success", "rolled_back"):
+            run_soar = auto_respond or settings.auto_response_enabled
+            if run_soar:
+                playbooks = alert.recommended_playbooks[:1]
+                for pb_id in playbooks:
+                    if not self._should_run_playbook(alert.entity.id, pb_id):
+                        continue
+                    result = self.soar.execute(pb_id, alert)
+                    remediations.append(result)
                     self.audit.append(
                         actor="soar-engine",
                         action=f"remediation_{result.status.value}",
@@ -89,9 +122,10 @@ class AegisPlatform:
             "event_id": enriched.event_id,
             "confidence": enriched.confidence,
             "severity": enriched.severity.value,
-            "alerts": [a.alert_id for a in module_alerts],
+            "alerts": alert_ids,
             "incidents": [i.incident_id for i in incidents],
             "remediations": [r.status.value for r in remediations],
+            "auto_respond": auto_respond or settings.auto_response_enabled,
         }
 
     def health_all(self) -> dict[str, Any]:
@@ -108,5 +142,6 @@ class AegisPlatform:
             "audit_chain": {"valid": chain_ok, "message": chain_msg},
             "recent_alerts": len(self.correlator.list_alerts(10)),
             "recent_incidents": len(self.correlator.list_incidents(10)),
-            "remediations_executed": len(self._remediations),
+            "auto_response_enabled": settings.auto_response_enabled,
+            "soar_simulation_mode": settings.soar_simulation_mode,
         }

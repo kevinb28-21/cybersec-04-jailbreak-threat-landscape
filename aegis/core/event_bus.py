@@ -114,17 +114,23 @@ class RedisEventBus(EventBus):
         payload = event.model_dump_json()
         await self._redis.xadd(self.EVENTS_STREAM, {"data": payload})
         for handler in self._event_handlers:
-            result = handler(event)
-            if asyncio.iscoroutine(result):
-                await result
+            try:
+                result = handler(event)
+                if asyncio.iscoroutine(result):
+                    await result
+            except Exception:
+                logger.exception("Event handler failed for %s", event.event_id)
 
     async def publish_alert(self, alert: Alert) -> None:
         payload = alert.model_dump_json()
         await self._redis.xadd(self.ALERTS_STREAM, {"data": payload})
         for handler in self._alert_handlers:
-            result = handler(alert)
-            if asyncio.iscoroutine(result):
-                await result
+            try:
+                result = handler(alert)
+                if asyncio.iscoroutine(result):
+                    await result
+            except Exception:
+                logger.exception("Alert handler failed for %s", alert.alert_id)
 
     async def drain_events(self, limit: int = 100) -> list[NormalizedEvent]:
         entries = await self._redis.xrevrange(self.EVENTS_STREAM, count=limit)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import hashlib
 import re
 from typing import Any
 
@@ -57,8 +58,10 @@ class TieredDetector:
         """Enrich event with detection tier results; may elevate severity/confidence."""
         kb = get_knowledge_base()
 
-        # Tier 0 — dedup key
-        dedup_key = f"{event.source_module}:{event.entity.id}:{event.observable.type}:{hash(event.observable.value) % 10_000_000}"
+        # Tier 0 — dedup key (collision-safe)
+        dedup_key = hashlib.sha256(
+            f"{event.source_module}:{event.entity.id}:{event.observable.type}:{event.observable.value}".encode()
+        ).hexdigest()
         if dedup_key in self._seen:
             event.tags.append("deduplicated")
             return event
@@ -72,12 +75,16 @@ class TieredDetector:
         # Tier 1 — IOC match
         ioc_types = {
             ObservableType.CONNECTION: "ip",
+            ObservableType.FLOW: "ip",
             ObservableType.DNS_QUERY: "domain",
             ObservableType.FILE_HASH: "hash",
         }
         ioc_type = ioc_types.get(event.observable.type)
+        ioc_value = event.observable.value
+        if ioc_type == "ip" and event.observable.type == ObservableType.FLOW:
+            ioc_value = event.entity.id
         if ioc_type:
-            match = kb.match_ioc(ioc_type, event.observable.value)
+            match = kb.match_ioc(ioc_type, ioc_value)
             if match:
                 event.confidence = max(event.confidence, 0.95)
                 try:

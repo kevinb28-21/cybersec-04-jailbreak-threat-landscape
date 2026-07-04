@@ -39,7 +39,22 @@ docker compose -f deploy/docker-compose.personal.yml up --build
 curl http://localhost:8080/health
 ```
 
-## API Endpoints
+## API Authentication
+
+All endpoints except `/health` require the `X-API-Key` header:
+
+```bash
+curl -H "X-API-Key: your-secret-key" http://localhost:8080/status
+```
+
+Set `API_KEY` in `.env`. In production (`ENVIRONMENT=production`), startup fails if `API_KEY` is unset or default.
+
+## Security Defaults
+
+- **Auto-response disabled** by default (`AUTO_RESPONSE_ENABLED=false`)
+- Pass `"auto_respond": true` per ingest request to trigger SOAR, or enable globally in config
+- **SOAR simulation mode** labels actions as `[SIMULATED]` until real firewall integrations are configured
+- Rate limiting: 120 requests/minute per client IP on ingest endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|

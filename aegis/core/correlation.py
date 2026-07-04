@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from aegis.config import settings
+from aegis.core.database import get_connection
 from aegis.core.schema import (
     Alert,
     AlertStatus,
@@ -31,9 +32,7 @@ class CorrelationEngine:
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return get_connection(self.db_path)
 
     def _init_db(self) -> None:
         with self._connect() as conn:

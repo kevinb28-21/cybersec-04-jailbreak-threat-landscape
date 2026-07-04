@@ -46,9 +46,9 @@ class AISecGuardModule(SecurityModule):
         "in this fictional", "pretend you are", "maintenance mode",
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, soar: PlaybookEngine | None = None) -> None:
         self.taxonomy = get_taxonomy()
-        self.playbooks = PlaybookEngine()
+        self.playbooks = soar or PlaybookEngine()
         self._conversations: dict[str, ConversationState] = defaultdict(
             lambda: ConversationState(entity_id="", turns=deque(maxlen=20))
         )

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from aegis.config import settings
+from aegis.core.database import get_connection
 
 
 class AuditLedger:
@@ -18,40 +19,34 @@ class AuditLedger:
     def __init__(self, db_path: Path | None = None) -> None:
         self.db_path = db_path or settings.sqlite_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._write_lock = threading.Lock()
         self._init_db()
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-
     def _init_db(self) -> None:
-        with self._connect() as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS audit_chain (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    timestamp TEXT NOT NULL,
-                    actor TEXT NOT NULL,
-                    action TEXT NOT NULL,
-                    resource_type TEXT NOT NULL,
-                    resource_id TEXT NOT NULL,
-                    payload TEXT NOT NULL,
-                    prev_hash TEXT NOT NULL,
-                    entry_hash TEXT NOT NULL UNIQUE
+        with self._write_lock:
+            conn = get_connection(self.db_path)
+            try:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS audit_chain (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp TEXT NOT NULL,
+                        actor TEXT NOT NULL,
+                        action TEXT NOT NULL,
+                        resource_type TEXT NOT NULL,
+                        resource_id TEXT NOT NULL,
+                        payload TEXT NOT NULL,
+                        prev_hash TEXT NOT NULL,
+                        entry_hash TEXT NOT NULL UNIQUE
+                    )
+                    """
                 )
-                """
-            )
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_chain(resource_type, resource_id)"
-            )
-            conn.commit()
-
-    def _last_hash(self, conn: sqlite3.Connection) -> str:
-        row = conn.execute(
-            "SELECT entry_hash FROM audit_chain ORDER BY id DESC LIMIT 1"
-        ).fetchone()
-        return row["entry_hash"] if row else "0" * 64
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_chain(resource_type, resource_id)"
+                )
+                conn.commit()
+            finally:
+                conn.close()
 
     def append(
         self,
@@ -70,35 +65,46 @@ class AuditLedger:
             "resource_id": resource_id,
             "payload": payload or {},
         }
-        with self._connect() as conn:
-            prev_hash = self._last_hash(conn)
-            canonical = json.dumps(body, sort_keys=True, separators=(",", ":"))
-            entry_hash = hashlib.sha256(f"{prev_hash}:{canonical}".encode()).hexdigest()
-            conn.execute(
-                """
-                INSERT INTO audit_chain
-                (timestamp, actor, action, resource_type, resource_id, payload, prev_hash, entry_hash)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    ts,
-                    actor,
-                    action,
-                    resource_type,
-                    resource_id,
-                    json.dumps(payload or {}),
-                    prev_hash,
-                    entry_hash,
-                ),
-            )
-            conn.commit()
+        with self._write_lock:
+            conn = get_connection(self.db_path)
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                row = conn.execute(
+                    "SELECT entry_hash FROM audit_chain ORDER BY id DESC LIMIT 1"
+                ).fetchone()
+                prev_hash = row["entry_hash"] if row else "0" * 64
+                canonical = json.dumps(body, sort_keys=True, separators=(",", ":"))
+                entry_hash = hashlib.sha256(f"{prev_hash}:{canonical}".encode()).hexdigest()
+                conn.execute(
+                    """
+                    INSERT INTO audit_chain
+                    (timestamp, actor, action, resource_type, resource_id, payload, prev_hash, entry_hash)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        ts,
+                        actor,
+                        action,
+                        resource_type,
+                        resource_id,
+                        json.dumps(payload or {}),
+                        prev_hash,
+                        entry_hash,
+                    ),
+                )
+                conn.commit()
+            finally:
+                conn.close()
         return entry_hash
 
     def verify_chain(self) -> tuple[bool, str]:
-        with self._connect() as conn:
+        conn = get_connection(self.db_path)
+        try:
             rows = conn.execute(
                 "SELECT * FROM audit_chain ORDER BY id ASC"
             ).fetchall()
+        finally:
+            conn.close()
         prev = "0" * 64
         for row in rows:
             body = {
@@ -134,9 +140,12 @@ class AuditLedger:
             params.append(resource_id)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         params.append(limit)
-        with self._connect() as conn:
+        conn = get_connection(self.db_path)
+        try:
             rows = conn.execute(
                 f"SELECT * FROM audit_chain {where} ORDER BY id DESC LIMIT ?",
                 params,
             ).fetchall()
+        finally:
+            conn.close()
         return [dict(r) for r in rows]

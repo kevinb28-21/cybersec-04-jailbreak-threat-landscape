@@ -175,9 +175,9 @@ class PlaybookEngine:
     def _action_block_ip(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         ip = params.get("ip") or alert.entity.id
         rule_id = f"block-{ip.replace('.', '-')}"
-        # Production: iptables / pfSense / cloud SG API
+        prefix = "[SIMULATED] " if settings.soar_simulation_mode else ""
         rollback = [f"rollback_firewall:{rule_id}"]
-        return True, f"blocked IP {ip}", rollback
+        return True, f"{prefix}blocked IP {ip}", rollback
 
     def _action_block_llm(self, alert: Alert, params: dict) -> tuple[bool, str, list[str]]:
         return True, "LLM request blocked at gateway", []

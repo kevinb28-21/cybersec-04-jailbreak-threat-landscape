@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from aegis.config import KNOWLEDGE_DIR, settings
+from aegis.config import settings
+from aegis.core.database import get_connection
 
 
 @dataclass
@@ -51,9 +52,7 @@ class KnowledgeBase:
         self.reload()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return get_connection(self.db_path)
 
     def _init_db(self) -> None:
         with self._connect() as conn:
