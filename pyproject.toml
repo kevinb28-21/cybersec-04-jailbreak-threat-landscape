@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis-sentinel"
+version = "1.0.0"
+description = "Unified cybersecurity platform: network, endpoint, and AI security with real-time detection and autonomous response"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Aegis Security" }]
+dependencies = [
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.1",
+    "orjson>=3.10.0",
+    "rich>=13.7.0",
+    "jinja2>=3.1.4",
+    "pyyaml>=6.0.1",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.5.0",
+    "joblib>=1.4.0",
+    "openai>=1.30.0",
+    "anthropic>=0.28.0",
+    "tenacity>=8.3.0",
+]
+
+[project.optional-dependencies]
+redis = ["redis>=5.0.0"]
+dev = ["pytest>=8.2.0", "pytest-asyncio>=0.23.7", "httpx>=0.27.0"]
+
+[project.scripts]
+aegis = "aegis.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aegis*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]

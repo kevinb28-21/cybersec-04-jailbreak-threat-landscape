@@ -1,0 +1,16 @@
+id: rate_limit_scanner
+name: Rate Limit Port Scanner
+description: Rate-limit aggressive scanning source
+autonomy_tier: 2
+min_confidence: 0.6
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: rate_limit
+    params: {}
+    timeout_seconds: 10
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

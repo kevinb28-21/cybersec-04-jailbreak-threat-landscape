@@ -1,0 +1,21 @@
+id: block_ip
+name: Block Malicious IP
+description: Block source IP at perimeter with verification and rollback
+autonomy_tier: 2
+min_confidence: 0.75
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: block_ip
+    params: {}
+    timeout_seconds: 10
+    on_failure: rollback
+  - action: verify_block
+    params: {}
+    timeout_seconds: 10
+    on_failure: rollback
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

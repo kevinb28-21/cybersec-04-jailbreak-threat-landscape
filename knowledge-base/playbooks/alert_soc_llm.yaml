@@ -1,0 +1,13 @@
+id: alert_soc_llm
+name: Alert SOC — LLM Threat
+description: Notify SOC of LLM security event without auto-block
+autonomy_tier: 1
+min_confidence: 0.5
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

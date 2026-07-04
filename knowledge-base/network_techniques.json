@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "framework": "MITRE ATT&CK",
+  "techniques": [
+    {
+      "id": "NET-001",
+      "name": "Port Scanning",
+      "category": "Discovery",
+      "subcategory": "Network Reconnaissance",
+      "description": "Rapid connection attempts across multiple ports from a single source indicating reconnaissance.",
+      "mitre_attack_id": "T1046",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "defense_recommendations": [
+        "Rate-limit inbound connection attempts per source IP",
+        "Deploy honeypot ports to detect and tarpit scanners",
+        "Alert SOC when unique ports scanned exceeds threshold in 60s window"
+      ],
+      "tags": ["scan", "recon", "port_scan"]
+    },
+    {
+      "id": "NET-002",
+      "name": "DNS Tunneling",
+      "category": "Command and Control",
+      "subcategory": "DNS C2",
+      "description": "Abnormal DNS query patterns used to exfiltrate data or establish covert C2 channels.",
+      "mitre_attack_id": "T1071.004",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "defense_recommendations": [
+        "Monitor DNS query length and entropy",
+        "Block known DGA and tunneling domains",
+        "Deploy DNS sinkhole for suspicious TLDs"
+      ],
+      "tags": ["dns", "c2", "exfil"]
+    },
+    {
+      "id": "HOST-001",
+      "name": "Suspicious Process Execution",
+      "category": "Execution",
+      "subcategory": "Script Interpreter Abuse",
+      "description": "Execution of known offensive tools or encoded PowerShell/cmd patterns on endpoint.",
+      "mitre_attack_id": "T1059",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "defense_recommendations": [
+        "Enable command-line auditing",
+        "Block execution of known offensive binaries",
+        "Isolate host on critical process match"
+      ],
+      "tags": ["execution", "malware", "powershell"]
+    },
+    {
+      "id": "HOST-002",
+      "name": "Brute Force Authentication",
+      "category": "Credential Access",
+      "subcategory": "Password Guessing",
+      "description": "Repeated failed authentication attempts indicating credential brute force.",
+      "mitre_attack_id": "T1110",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "defense_recommendations": [
+        "Implement account lockout after N failures",
+        "Enable MFA on all remote access",
+        "Block source IP after threshold failures"
+      ],
+      "tags": ["brute_force", "credential_access"]
+    },
+    {
+      "id": "HOST-003",
+      "name": "Known Malware Hash",
+      "category": "Execution",
+      "subcategory": "Malware",
+      "description": "File hash matches known malicious indicator in threat intelligence database.",
+      "mitre_attack_id": "T1204",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "defense_recommendations": [
+        "Quarantine file immediately",
+        "Scan host for persistence mechanisms",
+        "Update endpoint signatures"
+      ],
+      "tags": ["malware", "hash", "ioc"]
+    }
+  ]
+}

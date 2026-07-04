@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "iocs": [
+    {
+      "type": "ip",
+      "value": "192.0.2.100",
+      "severity": "high",
+      "source": "seed",
+      "mitre_id": "T1071",
+      "description": "Example malicious C2 IP (RFC 5737 TEST-NET-1)"
+    },
+    {
+      "type": "domain",
+      "value": "evil-c2.example.com",
+      "severity": "critical",
+      "source": "seed",
+      "mitre_id": "T1071.004",
+      "description": "Example C2 domain for testing"
+    },
+    {
+      "type": "hash",
+      "value": "d41d8cd98f00b204e9800998ecf8427e",
+      "severity": "critical",
+      "source": "seed",
+      "mitre_id": "T1204",
+      "description": "Example test hash (empty file MD5)"
+    }
+  ]
+}
