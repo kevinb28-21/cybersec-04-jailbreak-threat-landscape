@@ -1,4 +1,12 @@
-# Data and runtime artifacts
+# GTM automation (local pipeline data)
+automation/config.json
+automation/data/leads.csv
+automation/data/content_calendar.csv
+automation/data/hubspot_import.csv
+automation/outreach/
+automation/content/
+automation/reports/
+
 data/
 results/
 *.db

@@ -134,6 +134,7 @@ API_PORT=8080
 ```bash
 pytest tests/ -v
 ./scripts/uat.sh   # full API + CLI acceptance test (requires running server)
+./automation/run_weekly.sh   # GTM: outreach drafts, content brief, weekly report
 ```
 
 ## Documentation
@@ -146,6 +147,8 @@ Engineer-grade docs in `docs/`:
 - [Market Research](docs/MARKET_RESEARCH.md) — TAM/SAM, competitors, regulatory tailwinds
 - [Pricing Strategy](docs/PRICING_STRATEGY.md) — tiers, revenue projections, MSP packaging
 - [Go-To-Market](docs/GO_TO_MARKET.md) — customer acquisition from zero
+- [Rollout Automation Plan](docs/ROLLOUT_AUTOMATION_PLAN.md) — 12-week GTM + weekly scripts
+- [Tool Stack](docs/TOOL_STACK.md) — $0–5/mo stack (Claude, Gemini, Cursor)
 - [Product Release](docs/PRODUCT_RELEASE.md) — beta → GA, distribution channels
 - [Architecture](docs/ARCHITECTURE.md)
 - [Network integration](docs/NETWORK_INTEGRATION.md)

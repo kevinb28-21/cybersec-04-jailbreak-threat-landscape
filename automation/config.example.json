@@ -1,0 +1,13 @@
+{
+  "founder_name": "YOUR_NAME",
+  "founder_email": "you@yourcompany.com",
+  "calendly_url": "https://cal.com/your-link/30min",
+  "company_name": "Aegis Sentinel",
+  "github_url": "https://github.com/kevinb28-21/cybersec-04-jailbreak-threat-landscape",
+  "docs_url": "https://github.com/kevinb28-21/cybersec-04-jailbreak-threat-landscape/tree/main/docs",
+  "weekly_outreach_target": 20,
+  "weekly_content_target": 3,
+  "weekly_followup_target": 10,
+  "linkedin_profile_url": "https://linkedin.com/in/YOUR_PROFILE",
+  "product_tagline": "Unified AI + network security. Self-hosted. From $499/mo."
+}

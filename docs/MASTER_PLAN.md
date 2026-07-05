@@ -16,7 +16,7 @@
 | **New engineer** | §2 Architecture summary | `docs/ARCHITECTURE.md`, `docs/API_REFERENCE.md` |
 | **DevOps / SRE** | §7 Deployment | `docs/DEPLOYMENT_RUNBOOK.md`, `docs/NETWORK_INTEGRATION.md` |
 | **SOC operator** | §6 Operations | `docs/OPERATOR_RUNBOOK.md` |
-| **Founder / sales** | §4 Market & §5 GTM | `docs/GO_TO_MARKET.md`, `docs/PRICING_STRATEGY.md` |
+| **Founder / sales** | §4 Market & §5 GTM | `docs/GO_TO_MARKET.md`, `docs/PRICING_STRATEGY.md`, **`docs/ROLLOUT_AUTOMATION_PLAN.md`** |
 | **Investor / stakeholder** | §4.3 Revenue model | `docs/MARKET_RESEARCH.md` |
 | **QA** | §8 Quality | `docs/UAT_REPORT.md`, run `pytest tests/ -v` |
 | **Demo / presales** | §9 Demo | `docs/DEMO_PRESENTATION_PLAN.md` |
@@ -498,6 +498,8 @@ Prioritized by market + GA gates:
 | [MARKET_RESEARCH.md](MARKET_RESEARCH.md) | TAM/SAM/SOM, competitors |
 | [PRICING_STRATEGY.md](PRICING_STRATEGY.md) | Tiers, revenue model |
 | [GO_TO_MARKET.md](GO_TO_MARKET.md) | Customer acquisition from zero |
+| [ROLLOUT_AUTOMATION_PLAN.md](ROLLOUT_AUTOMATION_PLAN.md) | 12-week execution + automation |
+| [TOOL_STACK.md](TOOL_STACK.md) | Free tools; Claude/Gemini/Cursor routing |
 | [PRODUCT_RELEASE.md](PRODUCT_RELEASE.md) | Release channels, GA gates |
 | [../README.md](../README.md) | Quick start |
 | [../CHANGELOG.md](../CHANGELOG.md) | Version history |
@@ -552,10 +554,11 @@ docker compose -f deploy/docker-compose.personal.yml up --build
 3. Create EULA draft
 
 ### Founder / GTM
-1. Publish landing page with pricing tiers
-2. Record 3-minute demo video
-3. Send first 20 design partner outreach emails
-4. Schedule Show HN launch for RC release
+1. Copy `automation/config.example.json` → `automation/config.json` and fill Calendly URL
+2. Run `./automation/run_weekly.sh` every Monday
+3. Publish landing page (Cursor: `automation/prompts/cursor_landing_page.md`)
+4. Send first 20 design partner outreach emails
+5. See `docs/ROLLOUT_AUTOMATION_PLAN.md` for 12-week calendar
 
 ### Documentation
 1. Export `PRINTABLE_ONE_PAGER.md` to PDF
