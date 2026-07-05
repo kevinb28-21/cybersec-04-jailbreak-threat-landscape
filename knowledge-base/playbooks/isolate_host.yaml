@@ -1,0 +1,17 @@
+id: isolate_host
+name: Isolate Compromised Host
+description: Network isolate endpoint on critical host threat
+autonomy_tier: 3
+min_confidence: 0.9
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: isolate_host
+    params: {}
+    timeout_seconds: 30
+    on_failure: rollback
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

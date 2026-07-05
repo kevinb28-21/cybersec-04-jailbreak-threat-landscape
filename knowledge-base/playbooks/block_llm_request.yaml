@@ -1,0 +1,16 @@
+id: block_llm_request
+name: Block LLM Jailbreak Request
+description: Block suspicious LLM prompt at API gateway
+autonomy_tier: 2
+min_confidence: 0.7
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: block_llm_request
+    params: {}
+    timeout_seconds: 5
+  - action: notify_webhook
+    params:
+      channel: aisec
+    timeout_seconds: 10

@@ -1,0 +1,3 @@
+id,company,name,title,email,linkedin_url,stage,funding,employee_count,tech_signal,compliance_trigger,personalization_hook,status,last_contact,next_action,notes
+1,Example AI Inc,Jane Doe,CTO,jane@example.com,https://linkedin.com/in/janedoe,Series A,2024-01,45,Shipped RAG chatbot,SOC2 in progress,Saw your blog post on agent tools,new,,
+2,,,,,,,,,,,,,,

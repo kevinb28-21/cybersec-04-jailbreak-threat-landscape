@@ -1,0 +1,7 @@
+week,date,pillar,channel,topic,cta,status,draft_file
+1,2026-07-07,AI attack education,LinkedIn,5 jailbreak patterns Aegis blocks in production,Book demo,planned,
+1,2026-07-09,Compliance,LinkedIn,EU AI Act Article 15 — what LLM deployers need by Aug 2026,Download checklist,planned,
+1,2026-07-11,Technical,Dev.to,How we built tiered detection without cloud LLMs,GitHub star,planned,
+2,2026-07-14,Proof,LinkedIn,Why unified AI + network security beats 3 vendors,Design partner,planned,
+2,2026-07-16,AI attack education,Blog,Agent tool poisoning — real detection example,Read docs,planned,
+2,2026-07-18,Technical,HN,Show HN: Aegis Sentinel self-hosted security platform,Try Docker,planned,

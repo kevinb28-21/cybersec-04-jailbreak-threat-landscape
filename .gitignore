@@ -1,11 +1,42 @@
-__pycache__/
-*.pyc
+# GTM automation (local pipeline data)
+automation/config.json
+automation/data/leads.csv
+automation/data/content_calendar.csv
+automation/data/hubspot_import.csv
+automation/outreach/
+automation/content/
+automation/reports/
+
+data/
+results/
+*.db
+*.joblib
+
+# Cloned cyber project repos (run scripts/clone-cyber-projects.sh)
+cyber-projects/0*/
+cyber-projects/1*/
+!cyber-projects/README.md
+
+# Environment
 .env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
 *.egg-info/
+.eggs/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
 .DS_Store
-chroma_db/
-models/*.pt
-results/
-reports/*.json

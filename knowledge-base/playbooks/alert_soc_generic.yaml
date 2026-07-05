@@ -1,0 +1,13 @@
+id: alert_soc_generic
+name: Generic SOC Alert
+description: Log and notify for any unmatched threat
+autonomy_tier: 1
+min_confidence: 0.4
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

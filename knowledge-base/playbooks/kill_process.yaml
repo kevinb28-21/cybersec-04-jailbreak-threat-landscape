@@ -1,0 +1,16 @@
+id: kill_process
+name: Kill Malicious Process
+description: Terminate suspicious process on endpoint
+autonomy_tier: 3
+min_confidence: 0.85
+steps:
+  - action: log_alert
+    params: {}
+    timeout_seconds: 5
+  - action: kill_process
+    params: {}
+    timeout_seconds: 15
+  - action: notify_webhook
+    params:
+      channel: soc
+    timeout_seconds: 10

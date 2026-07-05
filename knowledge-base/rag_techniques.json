@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "source_project": "06-rag-poisoning-attack-simulation",
+  "techniques": [
+    {
+      "id": "RAG-001",
+      "name": "Direct Fact Injection in Corpus",
+      "category": "RAG Poisoning",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0020",
+      "defense_recommendations": ["Source provenance validation", "Chunk anomaly scoring", "Trusted source registry"],
+      "tags": ["rag", "poisoning", "fact_injection"]
+    },
+    {
+      "id": "RAG-002",
+      "name": "Backdoor Trigger in Retrieved Chunks",
+      "category": "RAG Poisoning",
+      "severity": "CRITICAL",
+      "effectiveness_rating": 5,
+      "mitre_atlas_id": "AML.T0020",
+      "defense_recommendations": ["Scan chunks for injection patterns before retrieval", "Retrieval diversity enforcement"],
+      "tags": ["rag", "backdoor", "trigger"]
+    },
+    {
+      "id": "RAG-003",
+      "name": "False Authority Injection",
+      "category": "RAG Poisoning",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0043",
+      "defense_recommendations": ["Detect false authority phrases", "Cross-reference claims with trusted sources"],
+      "tags": ["rag", "authority_spoof", "misinformation"]
+    }
+  ]
+}

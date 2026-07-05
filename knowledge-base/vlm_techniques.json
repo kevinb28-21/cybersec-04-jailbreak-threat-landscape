@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "source_project": "07-steganographic-prompt-injection",
+  "techniques": [
+    {
+      "id": "VLM-001",
+      "name": "LSB Steganographic Prompt Injection",
+      "category": "Multimodal Injection",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0054",
+      "defense_recommendations": ["LSB steganalysis before VLM ingest", "Re-encode images to strip hidden data"],
+      "tags": ["steganography", "lsb", "vlm", "image"]
+    },
+    {
+      "id": "VLM-002",
+      "name": "EXIF Metadata Injection",
+      "category": "Multimodal Injection",
+      "severity": "MEDIUM",
+      "effectiveness_rating": 3,
+      "mitre_atlas_id": "AML.T0054.002",
+      "defense_recommendations": ["Strip EXIF/XMP metadata", "Validate image metadata fields"],
+      "tags": ["metadata", "exif", "vlm"]
+    },
+    {
+      "id": "VLM-003",
+      "name": "Invisible Overlay Injection",
+      "category": "Multimodal Injection",
+      "severity": "HIGH",
+      "effectiveness_rating": 4,
+      "mitre_atlas_id": "AML.T0054",
+      "defense_recommendations": ["Pixel variance analysis", "Normalize and resize before inference"],
+      "tags": ["overlay", "vlm", "steganography"]
+    }
+  ]
+}
