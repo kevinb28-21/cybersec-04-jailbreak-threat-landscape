@@ -138,8 +138,15 @@ pytest tests/ -v
 
 ## Documentation
 
+**Start here:** [Master Plan](docs/MASTER_PLAN.md) — single source of truth for product, engineering, and go-to-market.
+
 Engineer-grade docs in `docs/`:
 
+- [Master Plan](docs/MASTER_PLAN.md) — vision, architecture summary, market, pricing, GTM, roadmap
+- [Market Research](docs/MARKET_RESEARCH.md) — TAM/SAM, competitors, regulatory tailwinds
+- [Pricing Strategy](docs/PRICING_STRATEGY.md) — tiers, revenue projections, MSP packaging
+- [Go-To-Market](docs/GO_TO_MARKET.md) — customer acquisition from zero
+- [Product Release](docs/PRODUCT_RELEASE.md) — beta → GA, distribution channels
 - [Architecture](docs/ARCHITECTURE.md)
 - [Network integration](docs/NETWORK_INTEGRATION.md)
 - [API reference](docs/API_REFERENCE.md)
